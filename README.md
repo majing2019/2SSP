@@ -1,7 +1,10 @@
 <div align="center">
 
-  # 2SSP <br /> A Two-Stage Framework for Structured Pruning of LLMs
-
+  # 2SSP: A Two-Stage Framework for Structured Pruning of LLMs
+  
+  [Fabrizio Sandri](https://fabriziosandri.github.io/), [Elia Cunegatti](https://eliacunegatti.github.io/), [Giovanni Iacca](https://sites.google.com/site/giovanniiacca/)
+  
+  [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/1234.56789)
 </div>
 
 > **Abstract.** 
@@ -78,12 +81,12 @@ options:
 
 - Generate main table results for 2SSP at 25%, 37.5% and 50% sparsity on Mistral:
    ```bash
-   python 2ssp/main.py --model=mistralai/Mistral-7B-v0.3 --pruning_method=2ssp --num_prune=-2 --main_table_results
+   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --num_prune=-2 --main_table_results
    ```
 
 - Evaluate downstream tasks at 37.5% sparsity:
    ```bash
-   python 2ssp/main.py --model=mistralai/Mistral-7B-v0.3 --pruning_method=2ssp --num_prune=12 --evaluate_downstream
+   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --num_prune=12 --evaluate_downstream
    ```
 
 ## Supported Pruning Methods
