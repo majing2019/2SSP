@@ -11,7 +11,7 @@ from slicegpt_utils.slicing_scheduler import ConstSlicingScheduler
 from slicegpt_utils.gpu_utils import distribute_model
 
 @torch.no_grad()
-def slicegpt(model_path, num_prune, calibration_dataset):
+def slicegpt(model_path, sparsity, calibration_dataset):
   
   if "llama" in model_path.lower() or "phi-3" in model_path.lower() or "qwen2" in model_path.lower():
     dtype = torch.bfloat16
@@ -45,8 +45,6 @@ def slicegpt(model_path, num_prune, calibration_dataset):
     distribute_model(model_adapter)
 
   # compute new embedding dimension given the desired sparsity level
-  num_layers = len(model_adapter.model.model.layers)
-  sparsity = num_prune / num_layers
   new_embedding_dimension = int((1 - sparsity) * model_adapter.hidden_size)
   # round (down) to the nearest multiple of round_interval
   new_embedding_dimension -= new_embedding_dimension % 8

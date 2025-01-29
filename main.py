@@ -34,9 +34,9 @@ def parse_args():
     help="Specify the pruning method to apply"
   )
   parser.add_argument(
-    '--pruning_target', 
-    type=int, 
-    help="Specifies pruning rate in terms of transformer blocks. Values: -1 (prune at all sparsity rates with a step of one block), -2 (prune at sparsity rates: 25%%, 37.5%%, 50%%), or a positive integer N (prune the exact equivalent N blocks)"
+    '--sparsity_rate', 
+    type=float, 
+    help="Specifies pruning rate in terms of transformer blocks. Values: -1 (prune at all sparsity rates from 0.0 to 1.0 with a step of 1/N), -2 (prune at sparsity rates: 25%%, 37.5%%, 50%%), or a float value between 0.0 and 1.0. Note tht the sparsity rate shall be a"
   )
 
   parser.add_argument('--main_table_results', help="Generate results for the main results table in the paper (Table 1)", action='store_true')
@@ -137,7 +137,7 @@ def main():
   pruning_method = args.pruning_method
   if pruning_method is not None:
 
-    pruning_target = args.pruning_target
+    sparsity_rate = args.sparsity_rate
 
     logging.info("Loading the model")
     model = loadModel(args.model, args.cache_dir)
@@ -150,41 +150,49 @@ def main():
       torch.cuda.empty_cache()
       
 
-    if pruning_target == -1: # prune all possible blocks
+    if sparsity_rate == -1: # prune all possible blocks
+      pruning_rates = [i / num_blocks for i in range(1, num_blocks - 1)]
       pruning_rates = range(1,num_blocks - 1)
-    elif pruning_target == -2: # prune at 25%, 37.5%, 50%
+    elif sparsity_rate == -2: # prune at 25%, 37.5%, 50%
       pruning_rates = [0.25 * num_blocks, 0.375 * num_blocks, 0.5 * num_blocks]
       pruning_rates = [int(math.ceil(i)) for i in pruning_rates] # ceil for models like qwen where s * num_blocks is not an int
     else: # Prune a single sparsity rate
-      pruning_rates = range(pruning_target, pruning_target+1)
+      pruning_rates = [sparsity_rate]
 
-    for pruning_target in pruning_rates:
-      logging.info(f"Pruning rate {pruning_target / num_blocks} the equivalent of {pruning_target} blocks")
+    for target_sparsity in pruning_rates:
 
       set_seed(args.seed)
 
       # Measure pruning time
       start_time = time.time()
 
-      attnMask = None
-      mlpMask = None
+      if pruning_method in ["window_based", "shortgpt", "blockpruner", "evopress"]:
+        target_sparsity_blocks = target_sparsity * num_blocks
+        if not target_sparsity_blocks.is_integer():
+          logging.warning(f"Invalid sparsity rate for {pruning_method}: must be a multiple of 1/{num_blocks} since model has {num_blocks} blocks.")
+          target_sparsity_blocks = int(round(target_sparsity_blocks)) 
+          logging.warning(f"Rounding to nearest valid sparsity rate: {target_sparsity_blocks/num_blocks:.6f} ({int(target_sparsity_blocks)} blocks)")
+        else:
+          target_sparsity_blocks = int(round(target_sparsity_blocks))
+        
+        target_sparsity = target_sparsity_blocks / num_blocks
+
+      logging.info(f"Pruning rate {target_sparsity*100} (equivalent of {target_sparsity * num_blocks} blocks)")
+
+
+      attnMask = mlpMask = None
       if pruning_method == "window_based":
-        mask = window_based(model, pruning_target, calibration_dataset)
-        attnMask = mask
-        mlpMask = mask
+        attnMask = mlpMask = window_based(model, target_sparsity_blocks, calibration_dataset)
       elif pruning_method == "shortgpt":
-        mask = shortGPT(model, pruning_target, calibration_dataset)
-        attnMask = mask
-        mlpMask = mask
+        attnMask = mlpMask = shortGPT(model, target_sparsity_blocks, calibration_dataset)
       elif pruning_method == "blockpruner":
-        attnMask, mlpMask = blockpruner(model, pruning_target, first_calibration_sample)
+        attnMask, mlpMask = blockpruner(model, target_sparsity_blocks, first_calibration_sample)
       elif pruning_method == "evopress":
-        attnMask, mlpMask = evopress(model, pruning_target, tokenizer, dataset_c4_train, drop_entire_block=False)
+        attnMask, mlpMask = evopress(model, target_sparsity_blocks, tokenizer, dataset_c4_train, drop_entire_block=False)
       elif pruning_method == "2ssp":
-        pruning_rate = pruning_target / len(model.model.layers)
-        model = two_stage_2ssp(model, calibration_dataset_2ssp, pruning_rate)
+        model = two_stage_2ssp(model, calibration_dataset_2ssp, target_sparsity)
       elif pruning_method == "slicegpt":
-        model = slicegpt(args.model, pruning_target, calibration_dataset)
+        model = slicegpt(args.model, target_sparsity, calibration_dataset)
       else:
         logging.error("Invalid method provided")
         exit(1)

@@ -32,7 +32,7 @@ pip install -e ./
 ```
 usage: main.py [-h] --model MODEL [--seed SEED] [--cache_dir CACHE_DIR] [--dense]
                [--pruning_method {2ssp,window_based,shortgpt,blockpruner,evopress,slicegpt}]
-               [--pruning_target PRUNING_TARGET] [--main_table_results] [--evaluate_inference] [--evaluate_downstream]
+               [--sparsity_rate SPARSITY_RATE] [--main_table_results] [--evaluate_inference] [--evaluate_downstream]
                [--evaluate_perplexity] [--evaluate_qualitative] [--local_datasets] [--ablation]
                [--logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
@@ -48,10 +48,10 @@ options:
   --dense               Load the original dense model without pruning
   --pruning_method {2ssp,window_based,shortgpt,blockpruner,evopress,slicegpt}
                         Specify the pruning method to apply
-  --pruning_target PRUNING_TARGET
+  --sparsity_rate SPARSITY_RATE
                         Specifies pruning rate in terms of transformer blocks. Values: -1 (prune at all sparsity rates
-                        with a step of one block), -2 (prune at sparsity rates: 25%, 37.5%, 50%), or a positive integer
-                        N (prune the exact equivalent N blocks)
+                        from 0.0 to 1.0 with a step of 1/N), -2 (prune at sparsity rates: 25%, 37.5%, 50%), or a float
+                        value between 0.0 and 1.0. Note tht the sparsity rate shall be a
   --main_table_results  Generate results for the main results table in the paper (Table 1)
   --evaluate_inference  Measure the model's inference time
   --evaluate_downstream
@@ -64,6 +64,7 @@ options:
   --ablation            Run the ablation study experiments
   --logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the logging level (default: INFO)
+
 ```
 
 #### Examples
