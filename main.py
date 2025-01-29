@@ -19,7 +19,7 @@ def parse_args():
   parser = argparse.ArgumentParser(description="Pruning of transformer models")
   parser.add_argument('--model', type=str, required=True, help="Specify the model's name or path to be pruned")
   parser.add_argument('--seed', type=int, default=0, help="Set a seed for reproducibility (default: 0)")
-  parser.add_argument('--cache_dir', type=str, required=False, help="Path to a directory in which a downloaded pretrained model feature extractor should be cached")
+  parser.add_argument('--cache_dir', type=str, required=False, help="Path to a directory in which a downloaded pretrained model should be cached. This option is not supported when --pruning_method=slicegpt")
 
   parser.add_argument(
     '--dense', 
@@ -91,12 +91,11 @@ def main():
 
   # Calibration datasets
   num_calibration_samples_2ssp = 32
-  num_calibration_samples_slicegpt = 256
+  num_calibration_samples = 256 # For SliceGPT, ShortGPT and Window Based
 
-  calibration_dataset = get_calibration(dataset_c4_train, tokenizer, num_samples=num_calibration_samples_slicegpt, seq_len=2048)
+  calibration_dataset = get_calibration(dataset_c4_train, tokenizer, num_samples=num_calibration_samples, seq_len=2048)
 
   calibration_dataset_2ssp = calibration_dataset[:num_calibration_samples_2ssp]
-  calibration_dataset_slicegpt = calibration_dataset[:num_calibration_samples_slicegpt]
   first_calibration_sample = calibration_dataset[0]
   
 
@@ -163,11 +162,11 @@ def main():
       attnMask = None
       mlpMask = None
       if pruning_method == "window_based":
-        mask = window_based(model, num_prune, calibration_dataset_slicegpt)
+        mask = window_based(model, num_prune, calibration_dataset)
         attnMask = mask
         mlpMask = mask
       elif pruning_method == "shortgpt":
-        mask = shortGPT(model, num_prune, calibration_dataset_slicegpt)
+        mask = shortGPT(model, num_prune, calibration_dataset)
         attnMask = mask
         mlpMask = mask
       elif pruning_method == "blockpruner":
@@ -186,7 +185,7 @@ def main():
         pruning_rate = num_prune / len(model.model.layers)
         model = two_stage_2ssp(model, calibration_dataset_2ssp, pruning_rate)
       elif pruning_method == "slicegpt":
-        model = slicegpt(args.model, num_prune, calibration_dataset_slicegpt)
+        model = slicegpt(args.model, num_prune, calibration_dataset)
       else:
         logging.error("Invalid method provided")
         exit(1)

@@ -6,9 +6,9 @@
 
 import torch
 
-from slice import hf_utils, layernorm_fusion, rotate
-from slice.slicing_scheduler import ConstSlicingScheduler
-from slice.gpu_utils import distribute_model
+from slicegpt_utils import hf_utils, layernorm_fusion, rotate
+from slicegpt_utils.slicing_scheduler import ConstSlicingScheduler
+from slicegpt_utils.gpu_utils import distribute_model
 
 @torch.no_grad()
 def slicegpt(model_path, num_prune, calibration_dataset):

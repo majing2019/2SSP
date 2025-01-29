@@ -6,7 +6,7 @@ from typing import Any
 import torch
 from torch import Tensor
 
-from slice.modules import RMSN
+from slicegpt_utils.modules import RMSN
 
 from . import utils
 from .config import config

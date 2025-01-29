@@ -1,67 +1,49 @@
-# coding=utf-8
-# Copyright 2024 Microsoft and the HuggingFace Inc. team. All rights reserved.
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-import warnings
-from typing import Any, Optional, Tuple
+# This file contains derivations from
+# https://github.com/huggingface/transformers/blob/main/src/transformers/models/mistral/modeling_mistral.py
+# Copyright 2022 EleutherAI and the HuggingFace Inc. team. All rights reserved.
+# https://www.apache.org/licenses/LICENSE-2.0
 
 import torch
 from torch import FloatTensor, LongTensor, Tensor, matmul
 from torch.nn import Linear, Module
 from transformers import PretrainedConfig, PreTrainedTokenizerBase
-from transformers.models.phi3.modeling_phi3 import Phi3Config, Phi3DecoderLayer, Phi3ForCausalLM, Phi3RMSNorm
+from transformers.models.mistral.modeling_mistral import MistralConfig, MistralDecoderLayer,MistralForCausalLM, MistralRMSNorm
 
-from slice.model_adapter import LayerAdapter, ModelAdapter
+from slicegpt_utils.model_adapter import LayerAdapter, ModelAdapter
 
 
-class CompressedPhi3DecoderLayer(Phi3DecoderLayer):
+class CompressedMistralDecoderLayer(MistralDecoderLayer):
     """
-    This class simulates the Phi3DecoderLayer class from transformers
-    (https://github.com/huggingface/transformers/blob/main/src/transformers/models/phi3/modeling_phi3.py#L817)
+    This class simulates the MistralDecoderLayer class from transformers
+    (https://github.com/huggingface/transformers/blob/main/src/transformers/models/mistral/modeling_mistral.py#L376)
     but with the addition of a shortcut_Q attribute. This attribute is used to rotate the residual tensors.
     """
 
     def forward(
         self,
-        hidden_states: torch.Tensor,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_value: Optional[Tuple[torch.Tensor]] = None,
-        output_attentions: Optional[bool] = False,
-        use_cache: Optional[bool] = False,
+        hidden_states: Tensor,
+        attention_mask: Tensor | None = None,
+        position_ids: LongTensor | None = None,
+        past_key_value: tuple[Tensor] | None = None,
+        output_attentions: bool | None = False,
+        use_cache: bool | None = False,
         **kwargs,
-    ) -> Tuple[Any]:
-        if "padding_mask" in kwargs:
-            warnings.warn(
-                "Passing `padding_mask` is deprecated and will be removed in v4.37. "
-                "Please make sure use `attention_mask` instead.`"
-            )
+    ) -> tuple:
         """
         Args:
-            hidden_states (`torch.FloatTensor`):
-                input to the layer of shape `(batch, seq_len, embed_dim)`
+            hidden_states (`torch.FloatTensor`): input to the layer of shape `(batch, seq_len, embed_dim)`
             attention_mask (`torch.FloatTensor`, *optional*): attention mask of size
                 `(batch, 1, tgt_len, src_len)` where padding elements are indicated by very large negative values.
-            position_ids (`torch.LongTensor` of shape `({0})`, *optional*):
-                Indices of positions of each input sequence tokens in the position embeddings. Selected in the range
-                `[0, config.n_positions - 1]`. [What are position IDs?](../glossary#position-ids)
             output_attentions (`bool`, *optional*):
-                Whether or not to return the attentions tensors of all attention layers. See `attentions` under
+                Whether to return the attentions tensors of all attention layers. See `attentions` under
                 returned tensors for more detail.
             use_cache (`bool`, *optional*):
                 If set to `True`, `past_key_values` key value states are returned and can be used to speed up decoding
                 (see `past_key_values`).
-            past_key_value (`Tuple(torch.FloatTensor)`, *optional*): cached past key and value projection states
+            past_key_value (`tuple(torch.FloatTensor)`, *optional*): cached past key and value projection states
         """
 
         residual = hidden_states
@@ -69,30 +51,31 @@ class CompressedPhi3DecoderLayer(Phi3DecoderLayer):
         hidden_states = self.input_layernorm(hidden_states)
 
         # Self Attention
-        attn_outputs, self_attn_weights, present_key_value = self.self_attn(
+        hidden_states, self_attn_weights, present_key_value = self.self_attn(
             hidden_states=hidden_states,
             attention_mask=attention_mask,
             position_ids=position_ids,
             past_key_value=past_key_value,
             output_attentions=output_attentions,
             use_cache=use_cache,
+            **kwargs,
         )
-
         if self.attn_shortcut_Q is not None:
             rotated_residual = matmul(residual, self.attn_shortcut_Q)
-            hidden_states = rotated_residual + self.resid_attn_dropout(attn_outputs)
+            hidden_states = rotated_residual + hidden_states
         else:
-            hidden_states = residual + self.resid_attn_dropout(attn_outputs)
+            hidden_states = residual + hidden_states
 
+        # Fully Connected
         residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
         hidden_states = self.mlp(hidden_states)
 
         if self.mlp_shortcut_Q is not None:
             rotated_residual = matmul(residual, self.mlp_shortcut_Q)
-            hidden_states = rotated_residual + self.resid_mlp_dropout(hidden_states)
+            hidden_states = rotated_residual + hidden_states
         else:
-            hidden_states = residual + self.resid_mlp_dropout(hidden_states)
+            hidden_states = residual + hidden_states
 
         outputs = (hidden_states,)
 
@@ -105,10 +88,10 @@ class CompressedPhi3DecoderLayer(Phi3DecoderLayer):
         return outputs
 
 
-class Phi3LayerAdapter(LayerAdapter):
-    def __init__(self, layer: Phi3DecoderLayer) -> None:
+class MistralLayerAdapter(LayerAdapter):
+    def __init__(self, layer: MistralDecoderLayer) -> None:
         super().__init__()
-        self._layer: Phi3DecoderLayer = layer
+        self._layer: MistralDecoderLayer = layer
 
     @property
     def layer(self) -> Module:
@@ -129,22 +112,22 @@ class Phi3LayerAdapter(LayerAdapter):
         return self.layer.post_attention_layernorm
 
     def get_attention_inputs(self) -> list[Linear]:
-        return [self.layer.self_attn.qkv_proj]
+        return [self.layer.self_attn.q_proj, self.layer.self_attn.k_proj, self.layer.self_attn.v_proj]
 
     def get_attention_output(self) -> Linear:
         return self.layer.self_attn.o_proj
 
     def get_mlp_inputs(self) -> list[Linear]:
-        return [self.layer.mlp.gate_up_proj]
+        return [self.layer.mlp.gate_proj, self.layer.mlp.up_proj]
 
     def get_mlp_output(self) -> Linear:
         return self.layer.mlp.down_proj
 
 
-class Phi3ModelAdapter(ModelAdapter):
-    def __init__(self, model: Phi3ForCausalLM) -> None:
+class MistralModelAdapter(ModelAdapter):
+    def __init__(self, model: MistralForCausalLM) -> None:
         super().__init__()
-        self._model: Phi3ForCausalLM = model
+        self._model: MistralForCausalLM = model
 
     @property
     def model(self) -> Module:
@@ -156,7 +139,7 @@ class Phi3ModelAdapter(ModelAdapter):
 
     @property
     def config_type(self) -> type:
-        return Phi3Config
+        return MistralConfig
 
     @property
     def parallel_blocks(self) -> bool:
@@ -164,7 +147,6 @@ class Phi3ModelAdapter(ModelAdapter):
 
     @property
     def seqlen(self) -> int:
-        # if no sliding window, max_position_embeddings is same as original_max_position_embeddings
         return self.config.max_position_embeddings
 
     @property
@@ -177,19 +159,19 @@ class Phi3ModelAdapter(ModelAdapter):
 
     @property
     def original_layer_type(self) -> type:
-        return Phi3DecoderLayer
+        return MistralDecoderLayer
 
     @property
     def original_layer_norm_type(self) -> type:
-        return Phi3RMSNorm
+        return MistralRMSNorm
 
     @property
     def layer_adapter_type(self) -> type:
-        return Phi3LayerAdapter
+        return MistralLayerAdapter
 
     @property
     def compressed_layer_type(self) -> type:
-        return CompressedPhi3DecoderLayer
+        return CompressedMistralDecoderLayer
 
     @property
     def use_cache(self) -> bool:
@@ -227,6 +209,10 @@ class Phi3ModelAdapter(ModelAdapter):
     def get_lm_head(self) -> Linear:
         return self.model.lm_head
 
+    def post_init(self, tokenizer: PreTrainedTokenizerBase) -> None:
+        tokenizer.pad_token = tokenizer.eos_token
+        self.config.pad_token_id = tokenizer.pad_token_id
+
     @classmethod
     def _from_pretrained(
         cls,
@@ -237,15 +223,15 @@ class Phi3ModelAdapter(ModelAdapter):
         local_files_only: bool = False,
         token: str | bool | None = None,
     ) -> ModelAdapter | None:
-        if not model_name.startswith("microsoft/Phi-3-medium-128k-instruct"):
+        if not (model_name.startswith("mistralai/Mistral-7B-v0.3") or model_name.startswith("mistralai/Mistral-7B-v0.3")):
             return None
 
-        model = Phi3ForCausalLM.from_pretrained(
+        model = MistralForCausalLM.from_pretrained(
             model_path, torch_dtype=dtype, token=token, local_files_only=local_files_only
         )
         model.config.torch_dtype = dtype
 
-        return Phi3ModelAdapter(model)
+        return MistralModelAdapter(model)
 
     @classmethod
     def _from_uninitialized(
@@ -257,18 +243,18 @@ class Phi3ModelAdapter(ModelAdapter):
         local_files_only: bool = False,
         token: str | bool | None = None,
     ) -> ModelAdapter | None:
-        if not model_name.startswith("microsoft/Phi-3-medium-128k-instruct"):
+        if not (model_name.startswith("mistralai/Mistral-7B-v0.3") or model_name.startswith("mistralai/Mistral-7B-v0.3")):
             return None
 
-        class UninitializedPhi3ForCausalLM(Phi3ForCausalLM):
+        class UninitializedMistralForCausalLM(MistralForCausalLM):
             def _init_weights(self, _) -> None:
                 # Prevent weight initialization
                 pass
 
-        config = Phi3Config.from_pretrained(
+        config = MistralConfig.from_pretrained(
             model_path, torch_dtype=dtype, token=token, local_files_only=local_files_only
         )
-        model = UninitializedPhi3ForCausalLM(config)
+        model = UninitializedMistralForCausalLM(config)
         model = model.to(dtype=dtype)
 
-        return Phi3ModelAdapter(model)
+        return MistralModelAdapter(model)

@@ -13,7 +13,7 @@ from torch.nn import LayerNorm, Linear, Module
 from transformers import PretrainedConfig, PreTrainedTokenizerBase
 from transformers.models.phi.modeling_phi import PhiConfig, PhiDecoderLayer, PhiForCausalLM
 
-from slice.model_adapter import LayerAdapter, ModelAdapter
+from slicegpt_utils.model_adapter import LayerAdapter, ModelAdapter
 
 
 class CompressedPhiDecoderLayer(PhiDecoderLayer):

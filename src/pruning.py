@@ -258,23 +258,29 @@ based on the L2 norms of their hidden states. In the second stage, attention
 submodules are pruned iteratively to minimize perplexity loss.
 
 Args:
-  model (torch.nn.Module): The transformer model to prune.
-  calibration_dataset (Iterable[torch.Tensor]): A dataset of samples used for 
-                                                calculating norms and perplexity 
+  model (torch.nn.Module): The transformer model to prune. calibration_dataset
+  (Iterable[torch.Tensor]): A dataset of samples used for 
+                                                calculating norms and perplexity
                                                 during pruning.
   pruning_rate (float): The overall proportion of parameters to prune, 
-                        relative to the total number of parameters in the 
+                        relative to the total number of parameters in the
                         model's main layers.
   num_attn_submodules_to_prune (int, optional): The number of attention
-                        submodules to prune. If None, this is calculated based 
+                        submodules to prune. If None, this is calculated based
                         on Equation 5 in the paper
+  alpha (int, optional): balancing between the number of parameters pruned in
+                        the first and the second stages. See "Choice of alpha
+                        parameter" in Section "4.3. Hyperparameter Tuning" of
+                        the paper (Default: 1.5)
+  num_calibration_second_stage (int, optional): the number of calibration
+                        samples to use for the second stage (Default: 1)
 
 Returns:
   torch.nn.Module: The pruned transformer model, with both MLP and attention 
                    submodules pruned.
 """
 @torch.no_grad()
-def two_stage_2ssp(model, calibration_dataset, pruning_rate, num_attn_submodules_to_prune=None):
+def two_stage_2ssp(model, calibration_dataset, pruning_rate, num_attn_submodules_to_prune=None, alpha=1.5, num_calibration_second_stage = 1):
     
     layers = model.model.layers
     num_blocks = len(layers)
@@ -292,7 +298,7 @@ def two_stage_2ssp(model, calibration_dataset, pruning_rate, num_attn_submodules
 
     if num_attn_submodules_to_prune is None:
       num_attn_submodules_to_prune = round(
-        num_blocks * pow(pruning_rate, (mlp_total_params / attn_total_params) / 1.5)
+        num_blocks * pow(pruning_rate, (mlp_total_params / attn_total_params) / alpha)
       )
     logging.info(f"Pruning {num_attn_submodules_to_prune} attention submodules")
 
@@ -335,8 +341,7 @@ def two_stage_2ssp(model, calibration_dataset, pruning_rate, num_attn_submodules
     model.config.intermediate_size = num_preserve_mlp
 
     # 2. Second stage: pruning the Attention submodules
-    num_calib_blockpruner = 1
-    calibration_input_ids = torch.cat(calibration_dataset[:num_calib_blockpruner], dim=1)
+    calibration_input_ids = torch.cat(calibration_dataset[:num_calibration_second_stage], dim=1)
     
     attnMask, mlpMask = second_stage_attention(model, num_prune=num_attn_submodules_to_prune, calibration_input_ids=calibration_input_ids)
     maskModel(model, attnMask=attnMask, mlpMask=mlpMask)
