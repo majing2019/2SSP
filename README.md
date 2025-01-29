@@ -49,9 +49,9 @@ options:
   --pruning_method {2ssp,window_based,shortgpt,blockpruner,evopress,slicegpt}
                         Specify the pruning method to apply
   --sparsity_rate SPARSITY_RATE
-                        Specifies pruning rate in terms of transformer blocks. Values: -1 (prune at all sparsity rates
-                        from 0.0 to 1.0 with a step of 1/N), -2 (prune at sparsity rates: 25%, 37.5%, 50%), or a float
-                        value between 0.0 and 1.0. Note tht the sparsity rate shall be a
+                        A floating-point value ranging from 0.0 to 1.0 that determines the target sparsity level for
+                        pruning. If set to -1, pruning is performed at all sparsity levels from 0.0 to 1.0 with a step size
+                        of 1/N. A value of -2 applies pruning at predefined sparsity levels of 25%, 37.5%, and 50%.)
   --main_table_results  Generate results for the main results table in the paper (Table 1)
   --evaluate_inference  Measure the model's inference time
   --evaluate_downstream
@@ -64,7 +64,6 @@ options:
   --ablation            Run the ablation study experiments
   --logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the logging level (default: INFO)
-
 ```
 
 #### Examples
