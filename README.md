@@ -23,7 +23,7 @@ pip install -r requirements.txt
 
 Install Language Model Evaluation Harness (required for downstream task evaluation):
 ```bash
-cd lm_eval
+cd lm_harness
 pip install -e ./
 ```
 
