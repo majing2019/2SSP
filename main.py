@@ -152,7 +152,6 @@ def main():
 
     if int(round(sparsity_rate)) == -1: # prune all possible blocks
       pruning_rates = [i / num_blocks for i in range(1, num_blocks - 1)]
-      pruning_rates = range(1,num_blocks - 1)
     elif int(round(sparsity_rate)) == -2: # prune at 25%, 37.5%, 50%
       pruning_rates = [0.25, 0.375, 0.5]
     else: # Prune a single sparsity rate
