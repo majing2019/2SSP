@@ -1,6 +1,6 @@
 <div align="center">
 
-  # 2SSP: A Two-Stage Framework for Structured Pruning of LLMs
+  ## 2SSP: A Two-Stage Framework for Structured Pruning of LLMs
   
   [Fabrizio Sandri](https://fabriziosandri.github.io/), [Elia Cunegatti](https://eliacunegatti.github.io/), [Giovanni Iacca](https://sites.google.com/site/giovanniiacca/)
   
@@ -33,8 +33,7 @@ pip install -e ./
 usage: main.py [-h] --model MODEL [--seed SEED] [--cache_dir CACHE_DIR] [--dense]
                [--pruning_method {2ssp,window_based,shortgpt,blockpruner,evopress,slicegpt}]
                [--pruning_target PRUNING_TARGET] [--main_table_results] [--evaluate_inference] [--evaluate_downstream]
-               [--evaluate_perplexity] [--evaluate_qualitative] [--local_datasets]
-               [--ablation {calibration,one_stage,rows_vs_cols,l1_norm,balancing_sparsity_ratio}]
+               [--evaluate_perplexity] [--evaluate_qualitative] [--local_datasets] [--ablation]
                [--logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
 Pruning of transformer models
@@ -62,8 +61,7 @@ options:
   --evaluate_qualitative
                         Qualitative results
   --local_datasets      Use local datasets stored in the './data/' folder
-  --ablation {calibration,one_stage,rows_vs_cols,l1_norm,balancing_sparsity_ratio}
-                        Run a specific ablation experiment
+  --ablation            Run the ablation study experiments
   --logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}
                         Set the logging level (default: INFO)
 ```

@@ -117,8 +117,7 @@ Args:
   model (torch.nn.Module): The transformer model to prune
   num_prune (int): The number of equivalent entire blocks to prune 
   calibration_sample (torch.Tensor): A single calibration sample used to 
-                                     calculate perplexity for evaluating 
-                                     pruning decisions.
+                          calculate perplexity for evaluating pruning decisions.
 
 Returns:
   tuple[list[int], list[int]]: Two binary masks representing the pruning decision 
@@ -206,9 +205,8 @@ submodules are pruned iteratively to minimize perplexity loss.
 
 Args:
   model (torch.nn.Module): The transformer model to prune. calibration_dataset
-  (Iterable[torch.Tensor]): A dataset of samples used for 
-                                                calculating norms and perplexity
-                                                during pruning.
+  (Iterable[torch.Tensor]): A dataset of samples used for calculating norms and
+                        perplexity during pruning.
   pruning_rate (float): The overall proportion of parameters to prune, 
                         relative to the total number of parameters in the
                         model's main layers.

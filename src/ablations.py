@@ -380,69 +380,70 @@ def run_ablations(args, tokenizer, dataset_c4_train, wikitext_input_ids, calibra
       datefmt='%H:%M:%S'
   )
 
-  if args.ablation == "calibration":
-    logging.info('Running ablation: Choice of Calibration Set Size')
-    calibration_sizes = [2, 4, 8, 16, 32, 64, 128, 256]
+  # Calibration dataset ablation
+  logging.info('Running ablation: Choice of Calibration Set Size')
+  calibration_sizes = [2, 4, 8, 16, 32, 64, 128, 256]
 
-    sparsity = 0.5
-    ablation_calibration_dataset(args.model, tokenizer, sparsity, dataset_c4_train, wikitext_input_ids, calibration_sizes, seq_len=2048, method="2ssp", cache_dir=args.cache_dir)
+  sparsity = 0.5
+  ablation_calibration_dataset(args.model, tokenizer, sparsity, dataset_c4_train, wikitext_input_ids, calibration_sizes, seq_len=2048, method="2ssp", cache_dir=args.cache_dir)
+
+
+  # Running stage 1 only
+  logging.info('Running ablation: Running stage 1 only')
+
+  pruning_rates = [0.25, 0.375, 0.5]
+  for pruning_rate in pruning_rates:
+    model = loadModel(args.model, args.cache_dir)
+    set_seed(args.seed)
+
+    model = one_stage_2ssp(model, calibration_dataset_2ssp, pruning_rate)
+    ppl = evaluate_perplexity(model, wikitext_input_ids, seq_len=2048)
+
+    logging.info(f"Perplexity @ {pruning_rate} : {ppl}")
+
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+  # Pruning Rows-Columns vs. Columns-Rows
+  logging.info('Running ablation: Pruning Rows-Columns vs. Columns-Rows')
+
+  pruning_rates = [0.25, 0.375, 0.5]
+  for pruning_rate in pruning_rates:
+    model = loadModel(args.model, args.cache_dir)
+    set_seed(args.seed)
+
+    model = two_stage_2ssp_inverted(model, calibration_dataset_2ssp, pruning_rate)
+    ppl = evaluate_perplexity(model, wikitext_input_ids, seq_len=2048)
+
+    logging.info(f"Perplexity @ {pruning_rate} : {ppl}")
+
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+  # Neuron Selection based on L1 norm
+  logging.info('Running ablation: Neuron Selection based on L1 norm')
   
-  elif args.ablation == "one_stage":
-    logging.info('Running ablation: Running stage 1 only')
+  pruning_rates = [0.25, 0.375, 0.5]
+  for pruning_rate in pruning_rates:
+    model = loadModel(args.model, args.cache_dir)
+    set_seed(args.seed)
 
-    pruning_rates = [0.25, 0.375, 0.5]
-    for pruning_rate in pruning_rates:
-      model = loadModel(args.model, args.cache_dir)
-      set_seed(args.seed)
+    model = two_stage_2ssp_l1_norm(model, calibration_dataset_2ssp, pruning_rate)
+    ppl = evaluate_perplexity(model, wikitext_input_ids, seq_len=2048)
 
-      model = one_stage_2ssp(model, calibration_dataset_2ssp, pruning_rate)
-      ppl = evaluate_perplexity(model, wikitext_input_ids, seq_len=2048)
+    logging.info(f"Perplexity @ {pruning_rate} : {ppl}")
 
-      logging.info(f"Perplexity @ {pruning_rate} : {ppl}")
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
 
-      del model
-      gc.collect()
-      torch.cuda.empty_cache()
 
-  elif args.ablation == "rows_vs_cols":
-    logging.info('Running ablation: Pruning Rows-Columns vs. Columns-Rows')
+  # balancing the sparsity rate
+  logging.info('Running ablation: balancing the sparsity rate')
 
-    pruning_rates = [0.25, 0.375, 0.5]
-    for pruning_rate in pruning_rates:
-      model = loadModel(args.model, args.cache_dir)
-      set_seed(args.seed)
-
-      model = two_stage_2ssp_inverted(model, calibration_dataset_2ssp, pruning_rate)
-      ppl = evaluate_perplexity(model, wikitext_input_ids, seq_len=2048)
-
-      logging.info(f"Perplexity @ {pruning_rate} : {ppl}")
-
-      del model
-      gc.collect()
-      torch.cuda.empty_cache()
-
-  elif args.ablation == "l1_norm":
-    logging.info('Running ablation: Neuron Selection based on L1 norm')
-    
-    pruning_rates = [0.25, 0.375, 0.5]
-    for pruning_rate in pruning_rates:
-      model = loadModel(args.model, args.cache_dir)
-      set_seed(args.seed)
-
-      model = two_stage_2ssp_l1_norm(model, calibration_dataset_2ssp, pruning_rate)
-      ppl = evaluate_perplexity(model, wikitext_input_ids, seq_len=2048)
-
-      logging.info(f"Perplexity @ {pruning_rate} : {ppl}")
-
-      del model
-      gc.collect()
-      torch.cuda.empty_cache()
-
-  
-  elif args.ablation == "balancing_sparsity_ratio":
-    logging.info('Running ablation: balancing the sparsity rate')
-
-    num_blocks = 32
-    for i in range(1,num_blocks):
-      sparsity = i / num_blocks
-      ablation_balancing_sparsity_ratio(args.model, sparsity, calibration_dataset_2ssp, wikitext_input_ids, seed=args.seed, cache_dir=args.cache_dir)
+  num_blocks = 32
+  for i in range(1,num_blocks):
+    sparsity = i / num_blocks
+    ablation_balancing_sparsity_ratio(args.model, sparsity, calibration_dataset_2ssp, wikitext_input_ids, seed=args.seed, cache_dir=args.cache_dir)

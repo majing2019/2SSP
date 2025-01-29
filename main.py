@@ -48,12 +48,10 @@ def parse_args():
   parser.add_argument('--local_datasets', help="Use local datasets stored in the './data/' folder", action='store_true')
   parser.add_argument(
     '--ablation', 
-    type=str, 
-    choices=['calibration', 'one_stage', 'rows_vs_cols', 'l1_norm', 'balancing_sparsity_ratio'], 
+    action='store_true',
     required=False, 
-    help="Run a specific ablation experiment"
+    help="Run the ablation study experiments"
   )
-
   parser.add_argument(
         '--logging',
         type=str,
