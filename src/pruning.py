@@ -110,59 +110,6 @@ def shortGPT(model, num_prune, calibration_dataset):
 """
 BlockPruner (https://arxiv.org/abs/2406.10594)
 
-Iteratively removes the block that results in the smallest reduction in
-perplexity, calculated using only one calibration sample
-
-Args:
-  model (torch.nn.Module): The transformer model to prune
-  num_prune (int): The number of blocks to prune.
-  calibration_sample (torch.Tensor): A single calibration sample used to 
-                            calculate perplexity for evaluating pruning decisions.
-
-Returns:
-  list[int]: A binary mask representing the pruning decision for each block.
-"""
-@torch.no_grad()
-def blockpruner(model, num_prune, calibration_sample):
-  num_blocks = len(model.model.layers)
-  mask = [0] * num_blocks
-
-  for _ in range(num_prune):
-    best_to_prune = None
-    best_ppl = float("inf")
-    for to_prune in range(num_blocks):
-
-      # Cannot prune a layer twice
-      if mask[to_prune] == 1:
-         continue
-      
-      # mask the model
-      mask[to_prune] = 1
-      maskModel(model, attnMask=mask, mlpMask=mask)
-
-      # Evaluate
-      ppl = evaluate_perplexity(model, calibration_sample, seq_len=2048, enable_tqdm=False)
-
-      logging.debug(f"When pruning {to_prune} perplexity is {ppl}")
-      if ppl < best_ppl:
-        best_ppl = ppl
-        best_to_prune = to_prune
-
-      # Unmask the model
-      unmaskModel(model, attnMask=mask, mlpMask=mask)
-      mask[to_prune] = 0
-      
-
-    logging.debug(f"Best to prune: {best_to_prune} ({best_ppl})")
-    logging.debug("=================")
-    mask[best_to_prune] = 1
-  
-  return mask
-
-
-"""
-BlockPruner (at submodule level) (https://arxiv.org/abs/2406.10594)
-
 Iteratively removes the submodule of a block (attention or MLP) that results in 
 the smallest reduction in perplexity, calculated using only one calibration sample.
 
@@ -178,7 +125,7 @@ Returns:
                                for attention and MLP submodules for each layer.
 """
 @torch.no_grad()
-def blockpruner_submodule(model, num_prune, calibration_sample):
+def blockpruner(model, num_prune, calibration_sample):
   num_blocks = len(model.model.layers)
   attnMask = [0] * num_blocks
   mlpMask = [0] * num_blocks

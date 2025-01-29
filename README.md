@@ -31,10 +31,11 @@ pip install -e ./
 
 ```
 usage: main.py [-h] --model MODEL [--seed SEED] [--cache_dir CACHE_DIR] [--dense]
-               [--pruning_method {2ssp,window_based,shortgpt,blockpruner,blockpruner_submodule,evopress,evopress_submodule,slicegpt}]
-               [--num_prune NUM_PRUNE] [--ablation {calibration,one_stage,rows_vs_cols,l1_norm,balancing_sparsity_ratio}]
-               [--main_table_results] [--evaluate_inference] [--evaluate_downstream] [--evaluate_perplexity]
-               [--evaluate_qualitative] [--local_datasets]
+               [--pruning_method {2ssp,window_based,shortgpt,blockpruner,evopress,slicegpt}]
+               [--pruning_target PRUNING_TARGET] [--main_table_results] [--evaluate_inference] [--evaluate_downstream]
+               [--evaluate_perplexity] [--evaluate_qualitative] [--local_datasets]
+               [--ablation {calibration,one_stage,rows_vs_cols,l1_norm,balancing_sparsity_ratio}]
+               [--logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}]
 
 Pruning of transformer models
 
@@ -43,16 +44,15 @@ options:
   --model MODEL         Specify the model's name or path to be pruned
   --seed SEED           Set a seed for reproducibility (default: 0)
   --cache_dir CACHE_DIR
-                        Path to a directory in which a downloaded pretrained model should be cached. This option is not supported
-                        when --pruning_method=slicegpt
+                        Path to a directory in which a downloaded pretrained model should be cached. This option is not
+                        supported when --pruning_method=slicegpt
   --dense               Load the original dense model without pruning
-  --pruning_method {2ssp,window_based,shortgpt,blockpruner,blockpruner_submodule,evopress,evopress_submodule,slicegpt}
+  --pruning_method {2ssp,window_based,shortgpt,blockpruner,evopress,slicegpt}
                         Specify the pruning method to apply
-  --num_prune NUM_PRUNE
-                        Number of transformer blocks to prune. Use -1 to prune all possible blocks, -2 for specific sparsity ratios
-                        (25%, 37.5%, 50%), or specify an integer value for exact number of blocks to prune
-  --ablation {calibration,one_stage,rows_vs_cols,l1_norm,balancing_sparsity_ratio}
-                        Run a specific ablation experiment
+  --pruning_target PRUNING_TARGET
+                        Specifies pruning rate in terms of transformer blocks. Values: -1 (prune at all sparsity rates
+                        with a step of one block), -2 (prune at sparsity rates: 25%, 37.5%, 50%), or a positive integer
+                        N (prune the exact equivalent N blocks)
   --main_table_results  Generate results for the main results table in the paper (Table 1)
   --evaluate_inference  Measure the model's inference time
   --evaluate_downstream
@@ -62,6 +62,10 @@ options:
   --evaluate_qualitative
                         Qualitative results
   --local_datasets      Use local datasets stored in the './data/' folder
+  --ablation {calibration,one_stage,rows_vs_cols,l1_norm,balancing_sparsity_ratio}
+                        Run a specific ablation experiment
+  --logging {DEBUG,INFO,WARNING,ERROR,CRITICAL}
+                        Set the logging level (default: INFO)
 ```
 
 #### Examples
