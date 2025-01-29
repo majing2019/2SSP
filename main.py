@@ -150,12 +150,11 @@ def main():
       torch.cuda.empty_cache()
       
 
-    if sparsity_rate == -1: # prune all possible blocks
+    if int(round(sparsity_rate)) == -1: # prune all possible blocks
       pruning_rates = [i / num_blocks for i in range(1, num_blocks - 1)]
       pruning_rates = range(1,num_blocks - 1)
-    elif sparsity_rate == -2: # prune at 25%, 37.5%, 50%
-      pruning_rates = [0.25 * num_blocks, 0.375 * num_blocks, 0.5 * num_blocks]
-      pruning_rates = [int(math.ceil(i)) for i in pruning_rates] # ceil for models like qwen where s * num_blocks is not an int
+    elif int(round(sparsity_rate)) == -2: # prune at 25%, 37.5%, 50%
+      pruning_rates = [0.25, 0.375, 0.5]
     else: # Prune a single sparsity rate
       pruning_rates = [sparsity_rate]
 
@@ -170,10 +169,10 @@ def main():
         target_sparsity_blocks = target_sparsity * num_blocks
         if not target_sparsity_blocks.is_integer():
           logging.warning(f"Invalid sparsity rate for {pruning_method}: must be a multiple of 1/{num_blocks} since model has {num_blocks} blocks.")
-          target_sparsity_blocks = int(round(target_sparsity_blocks)) 
-          logging.warning(f"Rounding to nearest valid sparsity rate: {target_sparsity_blocks/num_blocks:.6f} ({int(target_sparsity_blocks)} blocks)")
+          target_sparsity_blocks = int(math.ceil(target_sparsity_blocks)) 
+          logging.warning(f"Rounding to next valid sparsity rate: {target_sparsity_blocks/num_blocks:.6f} ({int(target_sparsity_blocks)} blocks)")
         else:
-          target_sparsity_blocks = int(round(target_sparsity_blocks))
+          target_sparsity_blocks = int(target_sparsity_blocks)
         
         target_sparsity = target_sparsity_blocks / num_blocks
 
