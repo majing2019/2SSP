@@ -72,23 +72,23 @@ options:
    python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --dense --evaluate_perplexity
    ```
 
-- Pruning at 50% sparsity(the equivalent of 16 blocks in Llama) with `2ssp` and evaluating perplexity:
+- Pruning at 50% sparsity with `2ssp` and evaluating perplexity:
    ```bash
-   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --num_prune=16 --evaluate_perplexity
+   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --sparsity_rate=0.5 --evaluate_perplexity
    ```
-- Pruning at 50% sparsity(the equivalent of 16 blocks in Llama) with `ShortGPT` and evaluating perplexity:
+- Pruning at 50% sparsity with `ShortGPT` and evaluating perplexity:
    ```bash
-   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=shortgpt --num_prune=16 --evaluate_perplexity
+   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=shortgpt --sparsity_rate=0.5 --evaluate_perplexity
    ```
 
 - Generate main table results for 2SSP at 25%, 37.5% and 50% sparsity on Mistral:
    ```bash
-   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --num_prune=-2 --main_table_results
+   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --sparsity_rate=-2 --main_table_results
    ```
 
 - Evaluate downstream tasks at 37.5% sparsity:
    ```bash
-   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --num_prune=12 --evaluate_downstream
+   python 2ssp/main.py --model=meta-llama/Llama-2-7b-hf --pruning_method=2ssp --sparsity_rate=0.375 --evaluate_downstream
    ```
 
 ## Supported Pruning Methods
