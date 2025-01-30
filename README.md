@@ -4,7 +4,7 @@
   
   [Fabrizio Sandri](https://fabriziosandri.github.io/), [Elia Cunegatti](https://eliacunegatti.github.io/), [Giovanni Iacca](https://sites.google.com/site/giovanniiacca/)
   
-  [![arXiv](https://img.shields.io/badge/arXiv-1234.56789-b31b1b.svg)](https://arxiv.org/abs/2501.17771)
+  [![arXiv](https://img.shields.io/badge/arXiv-2501.17771-b31b1b.svg)](https://arxiv.org/abs/2501.17771)
 </div>
 
 > **Abstract.** 
@@ -109,3 +109,17 @@ Our method includes code sourced from the following repositories:
 - [Transformer Compression with SliceGPT](https://github.com/microsoft/TransformerCompression/)
 
 For more details, refer to the documentation or the associated research paper.
+
+
+
+## Citation
+If you find this work useful, please consider citing:
+```
+@article{sandri20252SSP,
+      title={2SSP: A Two-Stage Framework for Structured Pruning of LLMs}, 
+      author={Fabrizio Sandri and Elia Cunegatti and Giovanni Iacca},
+      journal={arXiv preprint arXiv:2501.17771},
+      url={https://arxiv.org/abs/2501.17771},
+      year={2025}
+}
+```
