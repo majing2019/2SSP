@@ -49,7 +49,6 @@ def parse_args():
   parser.add_argument(
     '--ablation', 
     action='store_true',
-    required=False, 
     help="Run the ablation study experiments"
   )
   parser.add_argument(
@@ -250,7 +249,7 @@ def main():
         unmaskModel(model, attnMask=attnMask, mlpMask=mlpMask)
 
   ###################### Ablations
-  if args.ablation is not None:
+  if args.ablation:
     run_ablations(args, tokenizer, dataset_c4_train, wikitext_input_ids, calibration_dataset_2ssp)
     
 
