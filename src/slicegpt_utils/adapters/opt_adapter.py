@@ -12,7 +12,7 @@ from torch.nn.functional import dropout
 from transformers import PretrainedConfig
 from transformers.models.opt.modeling_opt import OPTConfig, OPTDecoderLayer, OPTForCausalLM
 
-from slicegpt_utils.model_adapter import LayerAdapter, ModelAdapter
+from ..model_adapter import LayerAdapter, ModelAdapter
 
 
 class CompressedOPTDecoderLayer(OPTDecoderLayer):

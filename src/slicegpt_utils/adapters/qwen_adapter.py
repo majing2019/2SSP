@@ -12,7 +12,7 @@ from torch.nn import Linear, Module
 from transformers import PretrainedConfig, PreTrainedTokenizerBase
 from transformers.models.qwen2.modeling_qwen2 import Qwen2Config, Qwen2DecoderLayer, Qwen2ForCausalLM, Qwen2RMSNorm
 
-from slicegpt_utils.model_adapter import LayerAdapter, ModelAdapter
+from ..model_adapter import LayerAdapter, ModelAdapter
 
 
 class CompressedQwen2DecoderLayer(Qwen2DecoderLayer):

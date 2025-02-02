@@ -1,4 +1,4 @@
-from utilities import (
+from .utilities import (
   get_calibration,
   loadModel,
   set_seed,
@@ -8,8 +8,8 @@ from utilities import (
   prune_mlp,
   second_stage_attention
 )
-from evaluation import evaluate_perplexity
-from pruning import two_stage_2ssp
+from .evaluation import evaluate_perplexity
+from .pruning import two_stage_2ssp
 
 from tqdm import tqdm
 from types import MethodType

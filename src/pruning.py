@@ -2,7 +2,7 @@ from tqdm import tqdm
 import torch
 import logging
 
-from utilities import (
+from .utilities import (
   compute_intermediate_outputs,
   maskModel,
   unmaskModel,
@@ -10,7 +10,7 @@ from utilities import (
   prune_mlp,
   second_stage_attention
 )
-from evaluation import evaluate_perplexity
+from .evaluation import evaluate_perplexity
 
 
 """

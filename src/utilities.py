@@ -5,7 +5,7 @@ import torch
 from types import MethodType
 from transformers import AutoModelForCausalLM
 from tqdm import tqdm
-from evaluation import evaluate_perplexity
+from .evaluation import evaluate_perplexity
 
 """
 Sets a fixed seed for the reproducibility of the results

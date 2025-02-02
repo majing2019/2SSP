@@ -7,7 +7,7 @@ from typing import List, Optional
 import torch
 from transformers import AutoTokenizer
 from tqdm import tqdm
-from utilities import *
+from .utilities import *
 
 
 def collect_samples_with_join(

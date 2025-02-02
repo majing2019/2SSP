@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Callable, final
 
-from slicegpt_utils.model_adapter import SlicingConfig
+from .model_adapter import SlicingConfig
 
 
 class SlicingScheduler(ABC):

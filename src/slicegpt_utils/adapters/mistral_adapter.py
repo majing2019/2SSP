@@ -12,7 +12,7 @@ from torch.nn import Linear, Module
 from transformers import PretrainedConfig, PreTrainedTokenizerBase
 from transformers.models.mistral.modeling_mistral import MistralConfig, MistralDecoderLayer,MistralForCausalLM, MistralRMSNorm
 
-from slicegpt_utils.model_adapter import LayerAdapter, ModelAdapter
+from ..model_adapter import LayerAdapter, ModelAdapter
 
 
 class CompressedMistralDecoderLayer(MistralDecoderLayer):

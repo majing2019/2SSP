@@ -12,7 +12,7 @@ from torch.nn import Linear, Module
 from transformers import PretrainedConfig, PreTrainedTokenizerBase
 from transformers.models.llama.modeling_llama import LlamaConfig, LlamaDecoderLayer, LlamaForCausalLM, LlamaRMSNorm
 
-from slicegpt_utils.model_adapter import LayerAdapter, ModelAdapter
+from ..model_adapter import LayerAdapter, ModelAdapter
 
 
 class CompressedLlamaDecoderLayer(LlamaDecoderLayer):
